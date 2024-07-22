@@ -1,0 +1,71 @@
+import { ethers } from "ethers";
+import {useContext,useRef } from "react";
+import Web3Context from "../../context/Web3Context";
+import StakingContext from '../../context/StakingContext';
+import { toast } from "react-hot-toast";
+import "./StakeToken.css";
+import Button from "../Button/Button";
+
+const StakeAmount = () =>
+    {
+        const {stakingContract}=useContext(Web3Context);
+         const {isReload,setIsReload}=useContext(StakingContext)
+
+        const stakeAmountRef= useRef();
+         
+
+         const stakeToken=async(e)=>{
+           e.preventDefault();
+         const amount = stakeAmountRef.current.value.trim();
+         console.log(amount)
+         if(isNaN(amount) || amount<=0){
+         toast.error("Please enter a valid positive number.");
+         return;
+      }
+            const amountToStake = ethers.parseUnits(amount, 18).toString();
+            
+            try{
+                const  transaction = await stakingContract.stake(amountToStake)
+
+                await toast.promise(transaction.wait(),
+                {
+                  loading: "Transaction is pending...",
+                  success: 'Transaction successful 👌',
+                  error: 'Transaction failed 🤯'
+                });
+                stakeAmountRef.current.value = "";
+                setIsReload(!isReload);
+
+                //setTransactionStatus("Transaction is Pending.....")
+                //const receipt = await transaction.wait();
+                //if(receipt.status==1){
+                 //   setTransactionStatus("Transaction is Successful");
+
+                  //  setIsReload(!isReload)
+                  //  setTimeout(()=>{
+                   //     setTransactionStatus("")
+                 //   },5000)
+                  //  stakeAmountRef.current.value= "";
+
+
+               // }
+               // else{ setTransactionStatus("Transaction Failed...")
+            }
+            
+            catch(error){
+                toast.error("Staking Failed");
+                 console.error(error.message)
+            }
+
+        }
+        return(
+            <form onSubmit={stakeToken} className="stake-amount-form">
+            <label className="stake-input-label"> Stake Monkey Token :</label>
+            <input type="text" ref={stakeAmountRef} />
+            <Button onClick={stakeToken} type="submit" label="Stake Token" />
+          </form>
+        )
+        
+
+    }
+    export default StakeAmount;
